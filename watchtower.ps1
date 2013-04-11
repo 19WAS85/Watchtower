@@ -28,7 +28,7 @@ function Open-Notification
 {
     param ([string] $text)
 
-    $notification.BalloonTipIcon = "Info"
+    $notification.BalloonTipIcon = "Error"
     $notification.BalloonTipText = $text
     $notification.ShowBalloonTip(1)
 }
@@ -52,11 +52,15 @@ $restartTimerAction = {
 }
 
 $buildAction = {
-    Open-Notification "Building $solutionName"
     $timer.Stop()
     Unregister-Event FileChanged
     msbuild $solutionPath $buildParameters | Write-Host
     Register-ObjectEvent $fileWatcher Changed -SourceIdentifier FileChanged -Action $restartTimerAction
+
+    if ($LASTEXITCODE -eq 1)
+    {
+        Open-Notification "$solutionName compilation fail!"
+    }
 }
 
 Register-ObjectEvent $fileWatcher Changed -SourceIdentifier FileChanged -Action $restartTimerAction
