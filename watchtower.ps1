@@ -44,7 +44,7 @@ $buildParameters = "/p:Configuration=Release;DeployOnBuild=true;DeployTarget=Pac
 $fileWatcherFilter = '*.dll'
 $fileWatcher = New-Object IO.FileSystemWatcher $solutionDirectory, $fileWatcherFilter -Property @{ IncludeSubdirectories = $true; NotifyFilter = [IO.NotifyFilters]'FileName, LastWrite' }
 
-$timer = New-Object Timers.Timer -Property @{ Interval = 5000 }
+$timer = New-Object Timers.Timer -Property @{ Interval = 2000 }
 
 $restartTimerAction = {
     $timer.Stop()
@@ -52,7 +52,7 @@ $restartTimerAction = {
 }
 
 $buildAction = {
-    Open-Notification "Building $solutionName..."
+    Open-Notification "Building $solutionName"
     $timer.Stop()
     Unregister-Event FileChanged
     msbuild $solutionPath $buildParameters | Write-Host
