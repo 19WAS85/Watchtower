@@ -1,6 +1,6 @@
 [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
 
-$project = 'D:\Labs\Thunderstruck'
+$project = 'C:\Users\wagnera\Desktop\Thunderstruck'
 
 $base = $pwd.Path
 $files = "$base\files"
@@ -33,51 +33,77 @@ function Check-Integrity
 {
     param ([string] $step)
 
-    if ($LASTEXITCODE -eq 1)
+    $integrity = $LASTEXITCODE -eq 0
+
+    if (-not $integrity)
     {
-        Open-Notification "$step FAIL!"
-        Break
+        Open-Notification "$step FAILED!"
     }
+
+    return $integrity
 }
 
 function Write-Header
 {
     param ([string] $step)
 
-    $div = [String]::Empty.PadLeft($step.Length + 2, '-')
     $title = $step.ToUpper()
-
+    $date = Get-Date -Format "HH:mm:ss.fff"
+    $header = "$title [$date]"
+    $div = [String]::Empty.PadLeft($header.Length, '-')
+    
+    Write-Host ''
+    Write-Host ''
+    Write-Host $header
     Write-Host $div
-    Write-Host " $title"
-    Write-Host $div
+    Write-Host ''
 }
 
-Clean-Environment
+$lastVersion = "None"
 
-$step = 'Checking Version'
-Write-Header $step
-$version = .\version.ps1 $project
-Write-Host $version
-Check-Integrity $step
+while ($True)
+{
+    Clean-Environment
 
-$step = 'Getting Files'
-Write-Header $step
-.\files.ps1 $project $files
-Check-Integrity $step
+    Start-Sleep -s 5
 
-$step = 'Building Project'
-Write-Header $step
-.\build.ps1 $files $build
-Check-Integrity $step
+    $step = 'Checking Version'
+    Write-Header $step
+    $version = .\version.ps1 $project
+    Write-Host $version
+    $integrity = Check-Integrity $step
+    if (-not $integrity) { continue }
 
-$step = 'Running Tests'
-Write-Header $step
-.\test.ps1 $build
-Check-Integrity $step
+    if ($version -ne $lastVersion)
+    {
+        $lastVersion = $version
 
-$step = 'Creating Package'
-Write-Header $step
-.\package.ps1 $version $build $packages
-Check-Integrity $step
+        $step = 'Getting Files'
+        Write-Header $step
+        .\files.ps1 $project $files
+        $integrity = Check-Integrity $step
+        if (-not $integrity) { continue }
 
-Clean-Environment
+        $step = 'Building Project'
+        Write-Header $step
+        .\build.ps1 $files $build
+        $integrity = Check-Integrity $step
+        if (-not $integrity) { continue }
+
+        $step = 'Running Tests'
+        Write-Header $step
+        .\test.ps1 $build
+        $integrity = Check-Integrity $step
+        if (-not $integrity) { continue }
+
+        $step = 'Creating Package'
+        Write-Header $step
+        .\package.ps1 $version $build $packages
+        $integrity = Check-Integrity $step
+        if (-not $integrity) { continue }
+
+        Clean-Environment
+
+        Write-Header 'New package was successfully generated'
+    }
+}

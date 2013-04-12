@@ -29,17 +29,19 @@ function Create-ZipPackage
 }
 
 $parameters = "/p:Configuration=Release;DeployOnBuild=true;DeployTarget=Package;AutoParameterizationWebConfigConnectionStrings=False;_PackageTempDir=$build;OutputDir=$build"
-
 $solutions = dir -Path $files -Recurse -Filter *.sln
 
 foreach ($solution in $solutions)
 {
     $solutionFile = $solution.FullName
-    msbuild $solutionFile $parameters
+    msbuild /verbosity:minimal $solutionFile $parameters
 }
 
 $lastSolutionName = $solution.BaseName
 $zipArchive = "$packages\$lastSolutionName-$version.zip"
 $zipFiles =  dir $build | Select -Expand FullName
+$zipArchiveExists = Test-Path $zipArchive
+
+if ($zipArchiveExists) { rm $zipArchive -Force -ErrorAction SilentlyContinue }
 
 Create-ZipPackage $zipArchive $zipFiles
