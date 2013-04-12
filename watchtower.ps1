@@ -1,22 +1,11 @@
 [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
 
-function Open-FileDialog
-{
-	param (
-        [string] $title,
-        [string] $directory,
-        [string] $filter = "All Files (*.*)|*.*"
-    )
-	
-    $objForm = New-Object System.Windows.Forms.OpenFileDialog
-	$objForm.InitialDirectory = $directory
-	$objForm.Filter = $filter
-	$objForm.Title = $title
-	$show = $objForm.ShowDialog()
+$project = 'D:\Labs\Thunderstruck'
 
-	if ($show -eq "OK") { return $objForm.FileName }
-	else { return false }
-}
+$base = $pwd.Path
+$files = "$base\files"
+$build = "$base\build"
+$packages = "$base\packages"
 
 $notification = New-Object System.Windows.Forms.NotifyIcon -Property @{
     BalloonTipTitle = "Watchtower";
@@ -33,35 +22,62 @@ function Open-Notification
     $notification.ShowBalloonTip(1)
 }
 
-$solutionPath = Open-FileDialog 'Select Solution' '~' 'Solution Files (*.sln)|*.sln'
-$solutionFile = Get-Item $solutionPath
-$solutionDirectory = $solutionFile.Directory.FullName
-$solutionName = $solutionFile.BaseName
-
-$buildOutputFolder = $solutionDirectory + '\Build'
-$buildParameters = "/p:Configuration=Release;DeployOnBuild=true;DeployTarget=Package;AutoParameterizationWebConfigConnectionStrings=False;_PackageTempDir=$buildOutputFolder"
-
-$fileWatcherFilter = '*.dll'
-$fileWatcher = New-Object IO.FileSystemWatcher $solutionDirectory, $fileWatcherFilter -Property @{ IncludeSubdirectories = $true; NotifyFilter = [IO.NotifyFilters]'FileName, LastWrite' }
-
-$timer = New-Object Timers.Timer -Property @{ Interval = 2000 }
-
-$restartTimerAction = {
-    $timer.Stop()
-    $timer.Start()
+function Clean-Environment
+{
+    rm $files -Recurse -Force -ErrorAction SilentlyContinue
+    rm $build -Recurse -Force -ErrorAction SilentlyContinue
+    .\clean.ps1 $base
 }
 
-$buildAction = {
-    $timer.Stop()
-    Unregister-Event FileChanged
-    msbuild $solutionPath $buildParameters | Write-Host
-    Register-ObjectEvent $fileWatcher Changed -SourceIdentifier FileChanged -Action $restartTimerAction
+function Check-Integrity
+{
+    param ([string] $step)
 
     if ($LASTEXITCODE -eq 1)
     {
-        Open-Notification "$solutionName compilation fail!"
+        Open-Notification "$step FAIL!"
+        Break
     }
 }
 
-Register-ObjectEvent $fileWatcher Changed -SourceIdentifier FileChanged -Action $restartTimerAction
-Register-ObjectEvent $timer Elapsed -SourceIdentifier TimerElapsed -Action $buildAction
+function Write-Header
+{
+    param ([string] $step)
+
+    $div = [String]::Empty.PadLeft($step.Length + 2, '-')
+    $title = $step.ToUpper()
+
+    Write-Host $div
+    Write-Host " $title"
+    Write-Host $div
+}
+
+Clean-Environment
+
+$step = 'Checking Version'
+Write-Header $step
+$version = .\version.ps1 $project
+Write-Host $version
+Check-Integrity $step
+
+$step = 'Getting Files'
+Write-Header $step
+.\files.ps1 $project $files
+Check-Integrity $step
+
+$step = 'Building Project'
+Write-Header $step
+.\build.ps1 $files $build
+Check-Integrity $step
+
+$step = 'Running Tests'
+Write-Header $step
+.\test.ps1 $build
+Check-Integrity $step
+
+$step = 'Creating Package'
+Write-Header $step
+.\package.ps1 $version $build $packages
+Check-Integrity $step
+
+Clean-Environment

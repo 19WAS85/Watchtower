@@ -1,1 +1,4 @@
-*.bkp
+build
+files
+TestResults
+packages

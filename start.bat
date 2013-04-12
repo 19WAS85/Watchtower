@@ -1,3 +1,3 @@
 @ECHO OFF
 
-powershell -noexit . .\watchtower.ps1
+powershell -noexit .\watchtower.ps1
