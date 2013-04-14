@@ -16,7 +16,7 @@ function Create-ZipPackage
     $zipPackage = [System.IO.Packaging.ZipPackage]::Open($zipArchive, [System.IO.FileMode]"OpenOrCreate", [System.IO.FileAccess]"ReadWrite")
     [array] $files = $zipFiles -replace "C:", "" -replace "\\", "/"
 
-    ForEach ($file In $files) {
+    foreach ($file In $files) {
        $partName = New-Object System.Uri($file, [System.UriKind]"Relative")
        $part = $zipPackage.CreatePart($partName, "application/zip", [System.IO.Packaging.CompressionOption]"Maximum")
        $bytes = [System.IO.File]::ReadAllBytes($file)
