@@ -1,11 +1,6 @@
 [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
 
-$project = 'C:\Users\wagnera\Desktop\Thunderstruck'
-
-$base = $pwd.Path
-$files = "$base\files"
-$build = "$base\build"
-$packages = "$base\packages"
+. .\config.ps1
 
 $notification = New-Object System.Windows.Forms.NotifyIcon -Property @{
     BalloonTipTitle = "Watchtower";
