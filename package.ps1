@@ -15,11 +15,15 @@ function Create-ZipPackage
 
     $zipPackage = [System.IO.Packaging.ZipPackage]::Open($zipArchive, [System.IO.FileMode] 'OpenOrCreate', [System.IO.FileAccess] 'ReadWrite')
 
-    $directoryContent = Get-ChildItem $directory | Select -Expand FullName
+    $directoryContent = Get-ChildItem $directory -Recurse | Select -Expand FullName
     $directoryBase = $directory -Replace 'C:', '' -Replace '\\', '/'
 
     foreach ($file In $directoryContent)
     {
+        $isDirectory = (Get-Item $file).Attributes -eq "Directory"
+        Write-Host "isDirectory = $isDirectory"
+        if ($isDirectory) { continue }
+
         $partName = $file -Replace 'C:', '' -Replace '\\', '/' -Replace $directoryBase, ''
         $partNameUri = New-Object System.Uri($partName, [System.UriKind] 'Relative')
         $part = $zipPackage.CreatePart($partNameUri, 'application/zip', [System.IO.Packaging.CompressionOption] 'Maximum')
