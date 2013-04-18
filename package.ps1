@@ -9,20 +9,25 @@ param (
 function Create-ZipPackage
 {
     param (
-        [string] $zipArchive,
-        [array] $zipFiles
+        [string] $directory,
+        [string] $zipArchive
     )
 
-    $zipPackage = [System.IO.Packaging.ZipPackage]::Open($zipArchive, [System.IO.FileMode]"OpenOrCreate", [System.IO.FileAccess]"ReadWrite")
-    [array] $files = $zipFiles -replace "C:", "" -replace "\\", "/"
+    $zipPackage = [System.IO.Packaging.ZipPackage]::Open($zipArchive, [System.IO.FileMode] 'OpenOrCreate', [System.IO.FileAccess] 'ReadWrite')
 
-    foreach ($file In $files) {
-       $partName = New-Object System.Uri($file, [System.UriKind]"Relative")
-       $part = $zipPackage.CreatePart($partName, "application/zip", [System.IO.Packaging.CompressionOption]"Maximum")
-       $bytes = [System.IO.File]::ReadAllBytes($file)
-       $stream = $part.GetStream()
-       $stream.Write($bytes, 0, $bytes.Length)
-       $stream.Close()
+    $directoryContent = Get-ChildItem $directory | Select -Expand FullName
+    $zipFilesBase = $directory -Replace 'C:', '' -Replace '\\', '/'
+    [array] $zipFiles = $directoryContent -Replace 'C:', '' -Replace '\\', '/'
+
+    foreach ($file In $zipFiles)
+    {
+        $partName = $file -Replace $zipFilesBase, ''
+        $partNameUri = New-Object System.Uri($partName, [System.UriKind] 'Relative')
+        $part = $zipPackage.CreatePart($partNameUri, 'application/zip', [System.IO.Packaging.CompressionOption] 'Maximum')
+        $bytes = [System.IO.File]::ReadAllBytes($file)
+        $stream = $part.GetStream()
+        $stream.Write($bytes, 0, $bytes.Length)
+        $stream.Close()
     }
 
     $zipPackage.Close()
@@ -39,9 +44,7 @@ foreach ($solution in $solutions)
 
 $lastSolutionName = $solution.BaseName
 $zipArchive = "$packages\$lastSolutionName-$version.zip"
-$zipFiles =  dir $build | Select -Expand FullName
 $zipArchiveExists = Test-Path $zipArchive
-
 if ($zipArchiveExists) { rm $zipArchive -Force -ErrorAction SilentlyContinue }
 
-Create-ZipPackage $zipArchive $zipFiles
+Create-ZipPackage $build $zipArchive
