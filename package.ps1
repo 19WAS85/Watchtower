@@ -21,7 +21,6 @@ function Create-ZipPackage
     foreach ($file In $directoryContent)
     {
         $isDirectory = (Get-Item $file).Attributes -eq "Directory"
-        Write-Host "isDirectory = $isDirectory"
         if ($isDirectory) { continue }
 
         $partName = $file -Replace 'C:', '' -Replace '\\', '/' -Replace $directoryBase, ''
