@@ -16,12 +16,11 @@ function Create-ZipPackage
     $zipPackage = [System.IO.Packaging.ZipPackage]::Open($zipArchive, [System.IO.FileMode] 'OpenOrCreate', [System.IO.FileAccess] 'ReadWrite')
 
     $directoryContent = Get-ChildItem $directory | Select -Expand FullName
-    $zipFilesBase = $directory -Replace 'C:', '' -Replace '\\', '/'
-    [array] $zipFiles = $directoryContent -Replace 'C:', '' -Replace '\\', '/'
+    $directoryBase = $directory -Replace 'C:', '' -Replace '\\', '/'
 
-    foreach ($file In $zipFiles)
+    foreach ($file In $directoryContent)
     {
-        $partName = $file -Replace $zipFilesBase, ''
+        $partName = $file -Replace 'C:', '' -Replace '\\', '/' -Replace $directoryBase, ''
         $partNameUri = New-Object System.Uri($partName, [System.UriKind] 'Relative')
         $part = $zipPackage.CreatePart($partNameUri, 'application/zip', [System.IO.Packaging.CompressionOption] 'Maximum')
         $bytes = [System.IO.File]::ReadAllBytes($file)
@@ -34,7 +33,7 @@ function Create-ZipPackage
 }
 
 $parameters = "/p:Configuration=Release;DeployOnBuild=true;DeployTarget=Package;AutoParameterizationWebConfigConnectionStrings=False;_PackageTempDir=$build;OutputDir=$build"
-$solutions = dir -Path $files -Recurse -Filter *.sln
+$solutions = dir -Path $files -Recurse -Filter '*.sln'
 
 foreach ($solution in $solutions)
 {
