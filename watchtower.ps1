@@ -60,7 +60,7 @@ function Write-Header
 
 $lastVersion = 'None'
 
-while ($True)
+do
 {
     Clean-Environment
 
@@ -106,3 +106,4 @@ while ($True)
         Write-Header 'New package was successfully generated'
     }
 }
+while ($continuous)

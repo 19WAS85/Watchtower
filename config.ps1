@@ -14,3 +14,6 @@ $packages = "$base\packages"
 
 # Creates a zip file on packages folder.
 $zip = $true
+
+# Creates a continuous build cicle.
+$continuous = $true
