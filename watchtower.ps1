@@ -1,9 +1,13 @@
-[System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+param ([string] $environment = $null)
 
-. .\config.ps1
+[System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null
+
+if ($environment) { $environment = "-$environment" }
+
+. ".\config$environment.ps1"
 
 $notification = New-Object System.Windows.Forms.NotifyIcon -Property @{
-    BalloonTipTitle = "Watchtower";
+    BalloonTipTitle = 'Watchtower';
     Icon = [System.Drawing.SystemIcons]::Exclamation;
     Visible = $True
 }
@@ -12,7 +16,7 @@ function Open-Notification
 {
     param ([string] $text)
 
-    $notification.BalloonTipIcon = "Error"
+    $notification.BalloonTipIcon = 'Error'
     $notification.BalloonTipText = $text
     $notification.ShowBalloonTip(1)
 }
@@ -43,7 +47,7 @@ function Write-Header
     param ([string] $step)
 
     $title = $step.ToUpper()
-    $date = Get-Date -Format "HH:mm:ss.fff"
+    $date = Get-Date -Format 'HH:mm:ss.fff'
     $header = "$title [$date]"
     $div = [String]::Empty.PadLeft($header.Length, '-')
     
@@ -54,7 +58,7 @@ function Write-Header
     Write-Host ''
 }
 
-$lastVersion = "None"
+$lastVersion = 'None'
 
 while ($True)
 {

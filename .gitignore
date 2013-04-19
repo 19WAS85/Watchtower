@@ -2,3 +2,5 @@ build
 files
 TestResults
 packages
+config-*.ps1
+start-*.bat
