@@ -1,7 +1,8 @@
 param (
     [string] $version,
     [string] $build,
-    [string] $packages
+    [string] $packages,
+    [bool] $zip
 )
 
 [System.Reflection.Assembly]::Load("WindowsBase,Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35")
@@ -44,9 +45,19 @@ foreach ($solution in $solutions)
     msbuild /verbosity:minimal $solutionFile $parameters
 }
 
-$lastSolutionName = $solution.BaseName
-$zipArchive = "$packages\$lastSolutionName-$version.zip"
-$zipArchiveExists = Test-Path $zipArchive
-if ($zipArchiveExists) { rm $zipArchive -Force -ErrorAction SilentlyContinue }
-
-Create-ZipPackage $build $zipArchive
+if ($zip)
+{
+    $lastSolutionName = $solution.BaseName
+    $zipArchive = "$packages\$lastSolutionName-$version.zip"
+    $zipArchiveExists = Test-Path $zipArchive
+    if ($zipArchiveExists) { rm $zipArchive -Force -ErrorAction SilentlyContinue }
+    Create-ZipPackage $build $zipArchive
+}
+else
+{
+    $buildFiles = Get-ChildItem $build | Select -Expand FullName
+    foreach ($file in $buildFiles)
+    {
+        Copy-Item $file $packages -Recurse -Force
+    }
+}

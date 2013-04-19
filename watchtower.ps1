@@ -93,7 +93,7 @@ while ($True)
 
         $step = 'Creating Package'
         Write-Header $step
-        .\package.ps1 $version $build $packages
+        .\package.ps1 $version $build $packages $zip
         $integrity = Check-Integrity $step
         if (-not $integrity) { continue }
 

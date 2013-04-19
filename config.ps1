@@ -11,3 +11,6 @@ $build = "$base\build"
 
 # Directory to put release package.
 $packages = "$base\packages"
+
+# Creates a zip file on packages folder.
+$zip = $true
